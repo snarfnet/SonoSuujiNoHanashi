@@ -390,14 +390,26 @@ def ready_review_submission_id():
     response, body = api_json("GET", f"/apps/{APP_ID}/reviewSubmissions?limit=20")
     if response.status_code != 200:
         return None
+    ready_id = None
     for submission in body.get("data", []):
         state = submission.get("attributes", {}).get("state")
+        submission_id = submission["id"]
         if state == "READY_FOR_REVIEW":
-            return submission["id"]
+            ready_id = ready_id or submission_id
+        elif state == "UNRESOLVED_ISSUES":
+            response = api("PATCH", f"/reviewSubmissions/{submission_id}", json={
+                "data": {
+                    "type": "reviewSubmissions",
+                    "id": submission_id,
+                    "attributes": {"canceled": True},
+                }
+            })
+            print(f"Canceled unresolved review submission {submission_id}: {response.status_code}")
+            time.sleep(60)
         if state in ("WAITING_FOR_REVIEW", "IN_REVIEW"):
-            print(f"Already submitted: {submission['id']} {state}")
+            print(f"Already submitted: {submission_id} {state}")
             return "submitted"
-    return None
+    return ready_id
 
 
 def submit_for_review(version_id):
