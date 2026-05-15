@@ -281,7 +281,7 @@ def ensure_review_detail(version_id):
         "contactPhone": "+81 80-2368-9194",
         "contactEmail": "tokyonasu@yahoo.co.jp",
         "demoAccountRequired": False,
-        "notes": "ログイン不要です。初回起動時にApp Tracking Transparencyの許可ダイアログが表示され、その後に広告SDKを開始します。ホーム画面の「調べる」ボタンは入力なしでも結果を表示します。",
+        "notes": "ログイン不要です。初回起動時に広告確認画面が表示されます。「続ける」をタップすると、App Tracking Transparencyの許可ダイアログが表示されます。広告SDKと広告枠の読み込みは、このATT確認が終わった後に開始します。ホーム画面の「調べる」ボタンは入力なしでも結果を表示します。",
     }
     response, body = api_json("GET", f"/appStoreVersions/{version_id}/appStoreReviewDetail")
     if response.status_code == 200 and body.get("data"):

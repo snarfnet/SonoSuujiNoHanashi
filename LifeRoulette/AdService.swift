@@ -1,3 +1,4 @@
+import AppTrackingTransparency
 import GoogleMobileAds
 import SwiftUI
 import UIKit
@@ -7,14 +8,44 @@ protocol AdService {
     func banner() -> Banner
 }
 
-final class GoogleAdService: AdService {
+@MainActor
+final class GoogleAdService: ObservableObject, AdService {
     static let shared = GoogleAdService()
+
+    @Published private(set) var didCompleteTrackingFlow = false
 
     private var didStart = false
 
     private init() {}
 
-    @MainActor
+    func prepareForFirstLaunch() {
+        guard !didCompleteTrackingFlow else { return }
+
+        if ATTrackingManager.trackingAuthorizationStatus == .notDetermined {
+            return
+        }
+
+        didCompleteTrackingFlow = true
+        startIfNeeded()
+    }
+
+    func requestTrackingAuthorizationFromGate() async {
+        guard ATTrackingManager.trackingAuthorizationStatus == .notDetermined else {
+            didCompleteTrackingFlow = true
+            startIfNeeded()
+            return
+        }
+
+        await withCheckedContinuation { continuation in
+            ATTrackingManager.requestTrackingAuthorization { _ in
+                continuation.resume()
+            }
+        }
+
+        didCompleteTrackingFlow = true
+        startIfNeeded()
+    }
+
     func startIfNeeded() {
         guard !didStart else { return }
         didStart = true
